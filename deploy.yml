@@ -1,0 +1,25 @@
+- hosts: dockerserver
+  become: yes
+  tasks:
+    - name: Stop existing containers
+      shell: docker ps -q --filter "ancestor=mywebapp" | xargs -r docker stop
+      ignore_errors: yes
+
+    - name: Remove existing containers
+      shell: docker ps -aq --filter "ancestor=mywebapp" | xargs -r docker rm
+      ignore_errors: yes
+
+    - name: Remove old image
+      shell: docker rmi mywebapp
+      ignore_errors: yes
+
+    - name: Copy webapp to Docker host
+      copy:
+        src: /var/lib/jenkins/workspace/Automated-Project/
+        dest: /tmp
+
+    - name: Build Docker image
+      command: docker build -t mywebapp /tmp
+
+    - name: Run Docker container
+      command: docker run -d -p 80:80 --name mywebapp-container mywebapp
