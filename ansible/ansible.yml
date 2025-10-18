@@ -1,0 +1,33 @@
+- name: Deploy Website
+  hosts: docker_servers
+  become: yes
+  
+  tasks:
+    - name: Stop old container
+      command: docker stop my_website
+      ignore_errors: yes
+    
+    - name: Remove old container
+      command: docker rm my_website
+      ignore_errors: yes
+    
+    - name: Copy Dockerfile to server
+      copy:
+        src: ../Dockerfile
+        dest: /tmp/Dockerfile
+    
+    - name: Copy website folder to server
+      copy:
+        src: ../website/
+        dest: /tmp/website/
+    
+    - name: Build Docker image
+      command: docker build -t my_website_image /tmp
+    
+    - name: Run container
+      command: docker run -d --name my_website -p 80:80 --restart always my_website_image
+    
+    - name: Show success
+      debug:
+        msg: "Done! Visit http://{{ ansible_host }}"
+
